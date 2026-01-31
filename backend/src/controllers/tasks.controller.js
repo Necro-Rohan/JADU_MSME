@@ -1,5 +1,5 @@
 const taskService = require("../services/tasks.service");
-const logger = require("../../utils/logger");
+const logger = require("../utils/logger");
 
 class TaskController {
   async list(req, res) {

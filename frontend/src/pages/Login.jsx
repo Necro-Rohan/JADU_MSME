@@ -20,7 +20,7 @@ const Login = () => {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:3000/api/auth/login', {
+            const response = await fetch('http://localhost:3000/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -44,7 +44,7 @@ const Login = () => {
 
     const handleGoogleSuccess = async (credentialResponse) => {
         try {
-            const response = await fetch('http://localhost:3000/api/auth/google', {
+            const response = await fetch('http://localhost:3000/auth/google', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: credentialResponse.credential })

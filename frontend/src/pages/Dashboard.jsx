@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Package,
@@ -35,7 +36,14 @@ import {
 } from 'recharts';
 
 const Dashboard = () => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('dashboard');
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+    };
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -140,7 +148,7 @@ const Dashboard = () => {
 
                 {/* User Profile */}
                 <div className="mt-auto pt-6 border-t border-white/10 px-6">
-                    <button className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors group">
+                    <button onClick={handleLogout} className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-white/5 transition-colors group">
                         <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-semibold border border-white/10 group-hover:bg-white group-hover:text-[#033543] transition-colors shadow-inner">
                             JD
                         </div>

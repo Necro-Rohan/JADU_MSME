@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import RightSidebar from '../components/RightSidebar';
 import NotificationPanel from '../components/NotificationPanel';
+import InventoryView from '../components/InventoryView';
 import {
     PieChart,
     Pie,
@@ -213,102 +214,108 @@ const Dashboard = () => {
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-20">
                     <div className="max-w-7xl mx-auto space-y-8">
 
-                        {/* Metrics Row */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <MetricCard
-                                title="Total Revenue"
-                                value="₹ 24,500"
-                                trend="+12.5%"
-                                icon={<TrendingUp size={20} />}
-                            />
-                            <MetricCard
-                                title="Active Orders"
-                                value="142"
-                                trend="+5.2%"
-                                icon={<Package size={20} />}
-                            />
-                            <MetricCard
-                                title="New Customers"
-                                value="28"
-                                trend="+2.4%"
-                                icon={<Users size={20} />}
-                            />
-                        </div>
-
-                        {/* Charts Row */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                            {/* Revenue Chart */}
-                            <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="font-bold text-slate-800">Revenue Overview</h3>
-                                    <select className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-2 py-1 outline-none">
-                                        <option>This Year</option>
-                                        <option>Last Year</option>
-                                    </select>
+                        {activeTab === 'dashboard' && (
+                            <>
+                                {/* Metrics Row */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <MetricCard
+                                        title="Total Revenue"
+                                        value="₹ 24,500"
+                                        trend="+12.5%"
+                                        icon={<TrendingUp size={20} />}
+                                    />
+                                    <MetricCard
+                                        title="Active Orders"
+                                        value="142"
+                                        trend="+5.2%"
+                                        icon={<Package size={20} />}
+                                    />
+                                    <MetricCard
+                                        title="New Customers"
+                                        value="28"
+                                        trend="+2.4%"
+                                        icon={<Users size={20} />}
+                                    />
                                 </div>
-                                <div className="h-[300px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={revenueData}>
-                                            <defs>
-                                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#033543" stopOpacity={0.1} />
-                                                    <stop offset="95%" stopColor="#033543" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                                            <Tooltip
-                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                            />
-                                            <Area type="monotone" dataKey="revenue" stroke="#033543" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
 
-                            {/* Sales Pie Chart */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
-                                <h3 className="font-bold text-slate-800 mb-6">Sales by Category</h3>
-                                <div className="flex-1 min-h-[200px] relative">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={salesData}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={80}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                cornerRadius={4}
-                                            >
-                                                {salesData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                    {/* Center Text */}
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-3xl font-bold text-[#033543]">85%</span>
-                                        <span className="text-xs text-slate-400">Target</span>
+                                {/* Charts Row */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                                    {/* Revenue Chart */}
+                                    <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h3 className="font-bold text-slate-800">Revenue Overview</h3>
+                                            <select className="bg-slate-50 border border-slate-200 text-xs rounded-lg px-2 py-1 outline-none">
+                                                <option>This Year</option>
+                                                <option>Last Year</option>
+                                            </select>
+                                        </div>
+                                        <div className="h-[300px] w-full">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={revenueData}>
+                                                    <defs>
+                                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="#033543" stopOpacity={0.1} />
+                                                            <stop offset="95%" stopColor="#033543" stopOpacity={0} />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} />
+                                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                                    <Tooltip
+                                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                                    />
+                                                    <Area type="monotone" dataKey="revenue" stroke="#033543" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+
+                                    {/* Sales Pie Chart */}
+                                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col">
+                                        <h3 className="font-bold text-slate-800 mb-6">Sales by Category</h3>
+                                        <div className="flex-1 min-h-[200px] relative">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={salesData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={60}
+                                                        outerRadius={80}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                        cornerRadius={4}
+                                                    >
+                                                        {salesData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                            {/* Center Text */}
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                                <span className="text-3xl font-bold text-[#033543]">85%</span>
+                                                <span className="text-xs text-slate-400">Target</span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 space-y-3">
+                                            {salesData.map((item) => (
+                                                <div key={item.name} className="flex items-center justify-between text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
+                                                        <span className="text-slate-600">{item.name}</span>
+                                                    </div>
+                                                    <span className="font-semibold text-slate-900">{item.value}%</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="mt-4 space-y-3">
-                                    {salesData.map((item) => (
-                                        <div key={item.name} className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                                <span className="text-slate-600">{item.name}</span>
-                                            </div>
-                                            <span className="font-semibold text-slate-900">{item.value}%</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                            </>
+                        )}
+
+                        {activeTab === 'products' && <InventoryView />}
 
                     </div>
                 </div>

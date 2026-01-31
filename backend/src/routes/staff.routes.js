@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const staffController = require("../controllers/staff.controller");
-const { requireRole, roles } = require("../middleware/auth.middleware");
+const { requireRole, roles } = require("../middlewares/auth.middleware");
 
 // Public read for now (or staff level)
 router.get("/", requireRole([roles.ADMIN, roles.STAFF]), staffController.list);

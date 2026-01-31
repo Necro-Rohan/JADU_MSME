@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const agentController = require("../controllers/agent.controller");
-const { requireRole, roles } = require("../middleware/auth.middleware");
+const agentController = require("../controllers/agent.controller.js");
+const { requireRole, roles } = require("../middlewares/auth.middleware.js");
 
 router.get(
   "/logs",

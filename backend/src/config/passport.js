@@ -6,7 +6,8 @@ const bcrypt = require('bcryptjs');
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback",
+    // FALLBACK: If env var is missing, use the explicit Render URL to avoid localhost issues
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || "https://jadu-msme.onrender.com/auth/google/callback",
     proxy: true
 },
     async function (accessToken, refreshToken, profile, cb) {

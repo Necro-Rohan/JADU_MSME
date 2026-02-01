@@ -11,8 +11,8 @@ async function startServer() {
     await prisma.$connect();
     logger.info("Connected to Database");
 
-    app.listen(port, async () => {
-      logger.info(`Server running on port ${port}`);
+    app.listen(port, '0.0.0.0', async () => {
+      logger.info(`Server running on port ${port} at 0.0.0.0`);
       // Seed default admin if needed
       try {
         const authController = require("./controllers/auth.controller");

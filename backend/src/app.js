@@ -1,3 +1,6 @@
+// Load environment variables from .env early so config like OAuth client IDs are available
+require('dotenv').config();
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");

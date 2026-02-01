@@ -9,6 +9,11 @@ router.get(
   inventoryController.getExpiring,
 );
 router.get(
+  "/stats",
+  requireRole([roles.ADMIN, roles.STAFF]),
+  inventoryController.getDashboardStats
+);
+router.get(
   "/",
   requireRole([roles.ADMIN, roles.STAFF]),
   inventoryController.list,

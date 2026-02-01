@@ -1,12 +1,19 @@
-const agentService = require("../services/agent.service");
+
+const agentService = require('../services/agent.service');
 
 class AgentController {
-  async getLogs(req, res) {
+  async chat(req, res) {
     try {
-      const logs = await agentService.getDecisionLogs();
-      res.json(logs);
-    } catch (err) {
-      res.status(500).json({ error: "Failed to fetch logs" });
+      const { query, history } = req.body;
+      if (!query) {
+        return res.status(400).json({ error: "Query is required" });
+      }
+
+      const { text, logs } = await agentService.processQuery(query, history || []);
+      res.json({ response: text, logs });
+    } catch (error) {
+      console.error("Agent Controller Error:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   }
 }

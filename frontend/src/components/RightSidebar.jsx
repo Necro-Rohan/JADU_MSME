@@ -1,6 +1,43 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
-import { X, Send, Sparkles, Bot, User, Users, ToggleLeft, ToggleRight } from 'lucide-react';
+import {
+    X, Send, Sparkles, Bot, User, Users, ToggleLeft, ToggleRight, Mic, StopCircle,
+    Terminal, ChevronDown, ChevronUp
+} from 'lucide-react';
+
+// Sub-component for AI Logs
+const LogViewer = ({ logs }) => {
+    // Auto-open if there is an error in logs
+    const hasError = logs?.some(l => l.message.includes('ERROR') || l.message.includes('Failed'));
+    const [isOpen, setIsOpen] = useState(hasError);
+    if (!logs || logs.length === 0) return null;
+
+    return (
+        <div className="mt-2 pt-2 border-t border-slate-100">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-[#033543] transition-colors"
+            >
+                <Terminal size={12} />
+                {isOpen ? 'Hide AI Thought Process' : 'Show AI Thought Process'}
+                {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            {isOpen && (
+                <div className="mt-2 p-3 bg-[#0f172a] text-emerald-400 rounded-xl font-mono text-[10px] leading-relaxed overflow-x-auto shadow-inner">
+                    {logs.map((log, i) => (
+                        <div key={i} className="mb-1 last:mb-0 border-b border-slate-800 last:border-0 pb-1 last:pb-0">
+                            <span className="text-slate-500 mr-2 select-none">
+                                {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' })}
+                            </span>
+                            <span className="whitespace-pre-wrap">{log.message}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 // Sub-component for Staff Settings
 const StaffSettingsModal = () => {
@@ -83,23 +120,130 @@ const RightSidebar = ({ isOpen, onClose }) => {
     const [chatHistory, setChatHistory] = useState([
         { type: 'bot', text: 'Hello! I am your AI assistant. How can I help you optimize your business today?' }
     ]);
+    const [isRecording, setIsRecording] = useState(false);
+    const mediaRecorderRef = useRef(null);
+    const [transcribing, setTranscribing] = useState(false);
+    const messagesEndRef = useRef(null);
 
-    const handleSend = (e) => {
-        e.preventDefault();
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    React.useEffect(() => {
+        scrollToBottom();
+    }, [chatHistory, transcribing]);
+
+    const handleSend = async (e) => {
+        if (e) e.preventDefault();
         if (!message.trim()) return;
 
         // Add user message
         const newHistory = [...chatHistory, { type: 'user', text: message }];
         setChatHistory(newHistory);
+        const userQuery = message;
         setMessage('');
 
-        // Simulate AI response
-        setTimeout(() => {
-            setChatHistory(prev => [...prev, {
-                type: 'bot',
-                text: 'I am processing your request... This is a simulated response for the UI demo.'
-            }]);
-        }, 1000);
+        // Call Backend Agent
+        try {
+            // Include loading state bubble
+            setChatHistory(prev => [...prev, { type: 'bot', text: 'Thinking...', isLoading: true }]);
+
+            const token = localStorage.getItem('token');
+            const res = await axios.post('http://localhost:3000/agent/chat',
+                { query: userQuery, history: newHistory },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Remove loading bubble and add real response
+            setChatHistory(prev => {
+                const filtered = prev.filter(msg => !msg.isLoading);
+                return [...filtered, {
+                    type: 'bot',
+                    text: res.data.response,
+                    logs: res.data.logs
+                }];
+            });
+
+        } catch (err) {
+            console.error("Agent Error", err);
+            const errorLogs = err.response?.data?.logs || [];
+            const errorText = err.response?.data?.error || "Sorry, I encountered an error connecting to the brain.";
+
+            setChatHistory(prev => {
+                const filtered = prev.filter(msg => !msg.isLoading);
+                return [...filtered, {
+                    type: 'bot',
+                    text: errorText,
+                    logs: errorLogs
+                }];
+            });
+        }
+    };
+
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            const audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+
+                setTranscribing(true);
+                const formData = new FormData();
+                formData.append("file", audioBlob, "speech.webm");
+                formData.append("model", "whisper-1");
+
+                try {
+                    const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+                    if (!apiKey) {
+                        alert("OpenAI API Key not found. Please check your implementation.");
+                        return;
+                    }
+
+                    const response = await axios.post(
+                        "https://api.openai.com/v1/audio/transcriptions",
+                        formData,
+                        {
+                            headers: {
+                                "Content-Type": "multipart/form-data",
+                                "Authorization": `Bearer ${apiKey}`,
+                            },
+                        }
+                    );
+
+                    const text = response.data.text;
+                    if (text) {
+                        setMessage(prev => (prev ? prev + " " + text : text));
+                    }
+                } catch (error) {
+                    console.error("Transcription Error:", error);
+                    alert("Failed to transcribe audio.");
+                } finally {
+                    setTranscribing(false);
+                    // Stop tracks
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+        } catch (err) {
+            console.error("Mic Error:", err);
+            alert("Could not access microphone.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
     };
 
     return (
@@ -161,6 +305,8 @@ const RightSidebar = ({ isOpen, onClose }) => {
                                     : 'bg-white text-slate-700 border border-slate-100 rounded-2xl rounded-tl-none'
                                     }`}>
                                     {msg.text}
+                                    {/* Logs Viewer */}
+                                    {msg.type === 'bot' && <LogViewer logs={msg.logs} />}
                                 </div>
                                 <span className="text-[10px] text-slate-400 font-medium px-1">
                                     {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -168,11 +314,36 @@ const RightSidebar = ({ isOpen, onClose }) => {
                             </div>
                         </div>
                     ))}
+                    {transcribing && (
+                        <div className="flex gap-4 flex-row">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white text-emerald-600 border border-slate-100">
+                                <Bot size={18} />
+                            </div>
+                            <div className="p-4 bg-white text-slate-500 text-sm border border-slate-100 rounded-2xl rounded-tl-none italic flex items-center gap-2">
+                                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                Transcribing audio...
+                            </div>
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Area */}
                 <div className="p-5 bg-white border-t border-slate-100">
                     <form onSubmit={handleSend} className="relative flex items-center gap-2">
+                        {/* Mic Button */}
+                        <button
+                            type="button"
+                            onClick={isRecording ? stopRecording : startRecording}
+                            className={`p-3.5 rounded-xl transition-all shadow-lg active:scale-95 ${isRecording
+                                ? 'bg-red-500 text-white shadow-red-500/20 animate-pulse'
+                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+                                }`}
+                            title={isRecording ? "Stop Recording" : "Start Voice Input"}
+                        >
+                            {isRecording ? <StopCircle size={18} /> : <Mic size={18} />}
+                        </button>
+
                         <div className="relative flex-1">
                             <input
                                 type="text"

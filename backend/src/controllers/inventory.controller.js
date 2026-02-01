@@ -12,6 +12,16 @@ class InventoryController {
     }
   }
 
+  async getDashboardStats(req, res) {
+    try {
+      const stats = await inventoryService.getDashboardStats();
+      res.json(stats);
+    } catch (err) {
+      logger.error("Inventory Stats Error", err);
+      res.status(500).json({ error: "Failed to fetch inventory stats" });
+    }
+  }
+
   async list(req, res) {
     try {
       const items = await inventoryService.getAllItems();

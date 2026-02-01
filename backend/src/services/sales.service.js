@@ -143,6 +143,59 @@ class SalesService {
       // Ignore synchronous setup errors
     }
   }
+
+  async getDashboardStats() {
+    // 1. Total Revenue & Count
+    const aggregations = await prisma.sale.aggregate({
+      _sum: { totalAmount: true },
+      _count: { id: true },
+    });
+
+    // 2. Recent Sales
+    const recentSales = await prisma.sale.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: {
+        items: {
+          include: { item: true }
+        }
+      }
+    });
+
+    // 3. Monthly Revenue (Last 6 Months) - JS aggregation for DB independence/simplicity
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const monthlySales = await prisma.sale.findMany({
+      where: {
+        createdAt: {
+          gte: sixMonthsAgo
+        }
+      },
+      select: {
+        createdAt: true,
+        totalAmount: true
+      }
+    });
+
+    const monthlyRevenue = {};
+    monthlySales.forEach(sale => {
+      const month = sale.createdAt.toLocaleString('default', { month: 'short' });
+      monthlyRevenue[month] = (monthlyRevenue[month] || 0) + Number(sale.totalAmount);
+    });
+
+    const chartData = Object.keys(monthlyRevenue).map(key => ({
+      name: key,
+      revenue: monthlyRevenue[key]
+    }));
+
+    return {
+      totalRevenue: aggregations._sum.totalAmount || 0,
+      totalOrders: aggregations._count.id || 0,
+      recentSales,
+      revenueChart: chartData
+    };
+  }
 }
 
 module.exports = new SalesService();

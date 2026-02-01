@@ -329,7 +329,46 @@ class InventoryService {
       logger.error("Allocate Stock FEFO Error", error);
       throw error;
     }
+  }
 
+  async getDashboardStats() {
+    // 1. Total Items
+    const totalItems = await prisma.item.count({ where: { deletedAt: null } });
+
+    // 2. Low Stock & Total Value (requires computation)
+    // Fetch all active items with their batches to compute
+    const items = await prisma.item.findMany({
+      where: { deletedAt: null },
+      select: {
+        id: true,
+        reorderPoint: true,
+        sellingPrice: true,
+        inventoryBatches: {
+          select: { quantity: true }
+        }
+      }
+    });
+
+    let lowStockCount = 0;
+    let totalValue = 0;
+
+    items.forEach(item => {
+      const currentStock = item.inventoryBatches.reduce((sum, b) => sum + b.quantity, 0);
+
+      // Check Low Stock
+      if (currentStock <= item.reorderPoint) {
+        lowStockCount++;
+      }
+
+      // Add Value
+      totalValue += (currentStock * Number(item.sellingPrice));
+    });
+
+    return {
+      totalItems,
+      lowStockCount,
+      totalValue
+    };
   }
 }
 

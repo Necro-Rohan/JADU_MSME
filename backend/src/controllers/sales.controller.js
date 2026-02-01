@@ -36,6 +36,15 @@ class SalesController {
       return res.status(500).json({ error: "Internal Server Error" });
     }
   }
+  async getDashboardStats(req, res) {
+    try {
+      const stats = await salesService.getDashboardStats();
+      res.json(stats);
+    } catch (err) {
+      logger.error("Sales Stats Error", err);
+      res.status(500).json({ error: "Failed to fetch sales stats" });
+    }
+  }
 }
 
 module.exports = new SalesController();

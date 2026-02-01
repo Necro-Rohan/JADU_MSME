@@ -1,14 +1,68 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../api';
 import { Eye, EyeOff } from 'lucide-react';
+// import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
+    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleLogin = (e) => {
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        navigate('/dashboard');
+        setLoading(true);
+        setError('');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify({ name: data.name, role: data.role }));
+                navigate('/dashboard');
+            } else {
+                setError(data.error || 'Login failed');
+            }
+        } catch (err) {
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Check for tokens in URL on component mount
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const name = params.get('name');
+        const role = params.get('role');
+        const avatar = params.get('avatar');
+        const error = params.get('error');
+
+        if (token && name && role) {
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify({ name, role, avatar }));
+            navigate('/dashboard');
+        } else if (error) {
+            setError('Google Login Failed');
+        }
+    }, [navigate]);
+
+    const handleGoogleLogin = () => {
+        window.location.href = `${API_BASE_URL}/auth/google`;
     };
 
     return (
@@ -31,6 +85,12 @@ const Login = () => {
                 <div className="w-full max-w-[480px] mt-24 md:mt-12 mx-auto lg:mx-0">
                     <h1 className="text-[32px] font-bold mb-8 text-[#1e293b] tracking-tight">Login to your account</h1>
 
+                    {error && (
+                        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+                            {error}
+                        </div>
+                    )}
+
                     <form onSubmit={handleLogin} className="flex flex-col gap-5">
 
                         {/* Email Input */}
@@ -38,6 +98,9 @@ const Login = () => {
                             <label className="text-[13px] font-medium text-slate-600 ml-1">Email</label>
                             <input
                                 type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
                                 className="w-full p-4 bg-[#F8FAFC] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-[#033543]/30 focus:bg-[#f1f5f9] transition-all"
                                 placeholder="Enter your mail"
                                 required
@@ -53,6 +116,9 @@ const Login = () => {
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
                                     className="w-full p-4 bg-[#F8FAFC] rounded-xl text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:ring-1 focus:ring-[#033543]/30 focus:bg-[#f1f5f9] transition-all pr-12"
                                     placeholder="Enter your password"
                                     required
@@ -68,8 +134,12 @@ const Login = () => {
                         </div>
 
                         {/* Login Button */}
-                        <button type="submit" className="w-full py-4 bg-[#033543] text-white rounded-xl font-semibold text-[15px] hover:shadow-lg hover:shadow-[#033543]/20 hover:-translate-y-0.5 transition-all duration-300 mt-2 tracking-wide">
-                            Log in
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-4 bg-[#033543] text-white rounded-xl font-semibold text-[15px] hover:shadow-lg hover:shadow-[#033543]/20 hover:-translate-y-0.5 transition-all duration-300 mt-2 tracking-wide disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {loading ? 'Logging in...' : 'Log in'}
                         </button>
 
                         {/* Divider */}
@@ -80,10 +150,14 @@ const Login = () => {
                         </div>
 
                         {/* Social Login */}
-                        <div className="flex gap-4">
-                            <button type="button" className="w-full py-3.5 bg-white border border-slate-200 rounded-xl flex items-center justify-center gap-2.5 hover:bg-slate-50 transition-all cursor-pointer shadow-sm hover:shadow-md">
-                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="18" />
-                                <span className="font-medium text-slate-700 text-[13px]">Google</span>
+                        <div className="flex gap-4 justify-center">
+                            <button
+                                type="button"
+                                onClick={handleGoogleLogin}
+                                className="w-full flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-all font-sans"
+                            >
+                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+                                Continue with Google
                             </button>
                         </div>
 

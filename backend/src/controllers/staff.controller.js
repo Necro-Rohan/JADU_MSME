@@ -7,7 +7,11 @@ const prisma = require("../utils/prisma");
 class StaffController {
   async list(req, res) {
     try {
-      const staff = await staffService.getAllStaff();
+      const filter = {};
+      if (req.user && req.user.id) {
+        filter.createdById = req.user.id;
+      }
+      const staff = await staffService.getAllStaff(filter);
       res.json(staff);
     } catch (err) {
       logger.error("List Staff Error", err);
@@ -34,7 +38,8 @@ class StaffController {
         email,
         role,
         password: hashedPassword,
-        isAvailable
+        isAvailable,
+        createdById: req.user ? req.user.id : null
       });
 
       res.status(201).json(newStaff);

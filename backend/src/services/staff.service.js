@@ -2,9 +2,13 @@ const prisma = require("../utils/prisma");
 const logger = require("../utils/logger");
 
 class StaffService {
-  async getAllStaff() {
+  async getAllStaff(filter = {}) {
+    const where = { deletedAt: null };
+    if (filter.createdById) {
+      where.createdById = filter.createdById;
+    }
     return prisma.staff.findMany({
-      where: { deletedAt: null },
+      where,
       orderBy: { name: "asc" },
     });
   }
